@@ -31,4 +31,4 @@ jobs:
         key: ${{ secrets.SSHKEY }}
         script: |
           cd /home/strb/uss
-          NODE_ENV=production node dist/main.js --watch
+          NODE_ENV=production pm2 restart main --update-env
