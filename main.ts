@@ -4,7 +4,7 @@ const basicAuth = require('express-basic-auth')
 
 const app: Application = express();
 
-const PORT: number = 3001;
+const PORT: number = 3060;
 
 class User {
   id: string;

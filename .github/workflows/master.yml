@@ -25,5 +25,6 @@ jobs:
         port: ${{ secrets.PORT }}
         key: ${{ secrets.SSHKEY }}
         script: |
+          cd /home/strb/uss
           yarn build
           NODE_ENV=production pm2 start
