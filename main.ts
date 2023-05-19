@@ -33,7 +33,10 @@ app.use(basicAuth({
 }))
 
 app.post('/logoutUser', (req: Request, res: Response): void => {
-  let u: User = users.find((u: User) => {u.id == req.body.id});
+
+  console.log(req.body.name + " wants to log out")
+
+  let u: User = users.find((u: User) => u.id == req.body.id);
   if (u)
     {
     var index = users.indexOf(u);
