@@ -1,8 +1,15 @@
 import express, { Application, Request, Response } from 'express';
-const basicAuth = require('express-basic-auth')
+import * as WebSocket from "ws";
+import * as http from "http";
+import { init_rt, sendToAll } from './realtime';
+import basicAuth from "express-basic-auth";
 
+const app = express();
+const server = http.createServer(app);
 
-const app: Application = express();
+const wss: WebSocket.Server = new WebSocket.Server({ server, path: "/rt" });
+
+init_rt(wss);
 
 const PORT: number = 3060;
 
@@ -37,25 +44,33 @@ app.post('/logoutUser', (req: Request, res: Response): void => {
   console.log(req.body.name + " wants to log out")
 
   let u: User = users.find((u: User) => u.id == req.body.id);
-  if (u)
-    {
+  if (u) {
     var index = users.indexOf(u);
     if (index !== -1) {
       users.splice(index, 1);
       res.send("Removed user");
+    }
+    sendToAll(JSON.stringify(users));
+  }
+  else {
+    res.sendStatus(400);
   }
 
-  }
 });
 
 app.post('/sendUserInfo', (req: Request, res: Response): void => {
+
+  if (req.body.id === undefined) {
+    res.sendStatus(400);
+    return;
+  }
+
   let user: User = new User(req.body);
 
   // find user in array called users with id of user.id
   let u: User = users.find((u: User) => u.id == user.id);
 
-  if (u)
-  {
+  if (u) {
 
     // update entry
     u.update(user);
@@ -73,6 +88,8 @@ app.post('/sendUserInfo', (req: Request, res: Response): void => {
     res.send("User Registered")
   }
 
+  sendToAll(JSON.stringify(users));
+
 });
 
 app.post("/getPeopleOnScene", (req: Request, res: Response) => {
@@ -87,6 +104,7 @@ app.post("/getPeopleOnScene", (req: Request, res: Response) => {
   res.send(usersOnScene);
 });
 
-app.listen(PORT, (): void => {
-    console.log('SERVER IS UP ON PORT:', PORT);
+server.listen(3060, () => {
+  console.log("Server started on port 3060");
 });
+
