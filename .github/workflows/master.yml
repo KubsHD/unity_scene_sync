@@ -32,5 +32,5 @@ jobs:
         port: ${{ secrets.PORT }}
         key: ${{ secrets.SSHKEY }}
         script: |
-          cd /home/strb/uss
+          cd /home/strb/uss/server
           NODE_ENV=production pm2 restart main --update-env
