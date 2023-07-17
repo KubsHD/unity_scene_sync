@@ -1,13 +1,15 @@
 {
-    "name": "com.storbeed.unityscenesync",
+    "name": "com.storbeed.scenesync",
     "version": "1.2.3",
+    "author": "kubs",
     "displayName": "Unity Scene Sync",
     "description": "Allows you to see who is working on what scene in real time.",
     "unity": "2022.3",
     "unityRelease": "0f1",
-    "documentationUrl": "https://example.com/",
-    "changelogUrl": "https://example.com/changelog.html",
-    "licensesUrl": "https://example.com/licensing.html",
+    "dependencies": {
+        "com.endel.nativewebsocket": "https://github.com/endel/NativeWebSocket.git#upm",
+        "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask"
+      },
     "keywords": [
         "keyword1",
         "keyword2",
