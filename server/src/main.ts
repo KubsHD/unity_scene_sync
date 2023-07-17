@@ -3,6 +3,7 @@ import * as WebSocket from "ws";
 import * as http from "http";
 import { init_rt, sendToAll } from './realtime';
 import basicAuth from "express-basic-auth";
+import { User } from './models/User';
 
 const app = express();
 const server = http.createServer(app);
@@ -13,26 +14,11 @@ init_rt(wss);
 
 const PORT: number = 3060;
 
-class User {
-  id: string;
-  name: string;
-  scene: string;
-  time: number;
-
-  constructor(json: any) {
-    this.name = json.name;
-    this.id = json.id;
-    this.scene = json.scene;
-    this.time = Date.now();
-  }
-
-  update(newUserInfo: User): void {
-    this.scene = newUserInfo.scene;
-    this.time = Date.now();
-  };
-}
-
 const users: User[] = [];
+
+export const wsClientConnentedCallback = () => {
+  sendToAll(JSON.stringify(users));
+}
 
 app.use(express.json());
 app.use(basicAuth({
@@ -103,6 +89,10 @@ app.post("/getPeopleOnScene", (req: Request, res: Response) => {
 
   res.send(usersOnScene);
 });
+
+app.post("/ping", (req: Request, res: Response) => {
+  res.send("pong");
+})
 
 server.listen(3060, () => {
   console.log("Server started on port 3060");

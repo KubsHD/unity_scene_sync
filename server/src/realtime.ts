@@ -1,14 +1,18 @@
 import * as WebSocket from "ws";
 
+// todo: make this into a callback array
+import { wsClientConnentedCallback } from "./main";
+
 let server : WebSocket.Server;
 
+// WebSockets only used to notify clients of changes to the user list
 export const init_rt = (wss: WebSocket.Server) => {
-
     server = wss;
 
-    console.log("init_rt called");
     wss.on("connection", (ws: WebSocket) => {
         console.log("Client connected, total clients: " + wss.clients.size);
+
+        wsClientConnentedCallback();
 
         // Handle incoming messages from the client
         ws.on("message", (message: string) => {

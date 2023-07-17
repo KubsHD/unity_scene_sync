@@ -244,7 +244,6 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         var uwr = UnityWebRequest.Post(URL + "/sendUserInfo", JsonUtility.ToJson(_info), "application/json");
         AddAuthHeader(uwr);
         
-        
         var response = await uwr.SendWebRequest();
     }
 
