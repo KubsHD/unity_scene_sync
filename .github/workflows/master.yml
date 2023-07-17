@@ -22,7 +22,7 @@ jobs:
         port: ${{ secrets.PORT }}
         key: ${{ secrets.SSHKEY }}
         source: "./server"
-        target: "/home/strb/uss"
+        target: ${{ secrets.SERVER_PATH }}
 
     - name: Executing remote command
       uses: appleboy/ssh-action@master
@@ -32,5 +32,5 @@ jobs:
         port: ${{ secrets.PORT }}
         key: ${{ secrets.SSHKEY }}
         script: |
-          cd /home/strb/uss/server
+          cd ${{ secrets.SERVER_PATH }}/server
           NODE_ENV=production pm2 restart main --update-env
