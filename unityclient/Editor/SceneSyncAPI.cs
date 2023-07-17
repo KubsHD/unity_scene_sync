@@ -1,7 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Buffers.Text;
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
+using UnityEditor;
 using UnityEngine.Networking;
 
 public class SceneSyncAPI
@@ -15,7 +19,7 @@ public class SceneSyncAPI
     
     private static void AddAuthHeader(UnityWebRequest uwr)
     {
-        uwr.SetRequestHeader("Authorization", "Basic c3RyYjp4d3deMkw4YSRCSDZVQ0VjWiFIJDNCYzcjTnBvYyV4ZjUzQnRLQyFwaEppN1FXYVdWaGo0VF5L");
+        uwr.SetRequestHeader("Authorization", "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(":" + EditorPrefs.GetString(SceneSyncSettigns.PREFS_KEY_SECRET))));
     }
 
     
