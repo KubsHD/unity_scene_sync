@@ -33,4 +33,4 @@ jobs:
         key: ${{ secrets.SSHKEY }}
         script: |
           cd ${{ secrets.SERVER_PATH }}/server
-          NODE_ENV=production pm2 restart main --update-env
+          SECRET_KEY=${{ secrets.SECRET_KEY }} NODE_ENV=production pm2 restart main --update-env
