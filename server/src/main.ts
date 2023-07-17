@@ -22,7 +22,7 @@ export const wsClientConnentedCallback = () => {
 
 app.use(express.json());
 app.use(basicAuth({
-    users: { 'strb': 'xww^2L8a$BH6UCEcZ!H$3Bc7#Npoc%xf53BtKC!phJi7QWaWVhj4T^K' }
+    users: { '': process.env.SECRET_KEY }
 }))
 
 app.post('/logoutUser', (req: Request, res: Response): void => {
