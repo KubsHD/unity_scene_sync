@@ -1,6 +1,5 @@
 FROM node:18-alpine as base
 
-
 FROM base as builder
 WORKDIR /app
 COPY . .
