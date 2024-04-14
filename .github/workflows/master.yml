@@ -23,3 +23,4 @@ jobs:
           push: true
           tags: kubs/unity-scene-sync:latest
           context: "{{defaultContext}}:server"
+          platforms: linux/amd64,linux/arm64
