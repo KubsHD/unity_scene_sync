@@ -1,0 +1,9 @@
+version: '3.7'
+
+services:
+  web:
+    image: kubs/unity-scene-sync:latest
+    ports:
+      - "9050:3060"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
