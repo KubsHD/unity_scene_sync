@@ -22,3 +22,4 @@ jobs:
         with:
           push: true
           tags: kubs/unity-scene-sync:latest
+          context: ./server 
