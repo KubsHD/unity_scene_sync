@@ -48,7 +48,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
     {
         URL = EditorPrefs.GetString(SceneSyncSettigns.PREFS_KEY_URL);
 
-        _api = new SceneSyncAPI(URL);
+        _api = new SceneSyncAPI(URL, PlayerSettings.productName);
 
     
         
@@ -79,12 +79,18 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         Debug.Log("Scene sync initalized! ");
         
         _info.scene = SceneManager.GetActiveScene().name;
-        _api.SendCurrentScene(_info);
+        _ = _api.SendCurrentScene(_info);
     }
     
     private async void WebSocketThread()
     {
-        _ws = new WebSocket(URL.Replace("http", "ws") + "/rt");
+        var websocketUrl = URL.Replace("http", "ws") + "/api/scene/ws";
+        Debug.Log(websocketUrl);
+
+        _ws = new WebSocket(websocketUrl, new Dictionary<string, string>
+        {
+            {"key", EditorPrefs.GetString(SceneSyncSettigns.PREFS_KEY_SECRET)}
+        });
 
         _ws.OnOpen += () =>
         {

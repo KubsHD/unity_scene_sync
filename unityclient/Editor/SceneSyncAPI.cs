@@ -11,10 +11,12 @@ using UnityEngine.Networking;
 public class SceneSyncAPI
 {
     private string _url;
+    private string _project;
 
-    public SceneSyncAPI(string url)
+    public SceneSyncAPI(string url, string project)
     {
-        _url = url;
+        _project = project;
+        _url = url + "/api/scene/" + _project;
     }
     
     private static void AddAuthHeader(UnityWebRequest uwr)
@@ -22,6 +24,13 @@ public class SceneSyncAPI
         uwr.SetRequestHeader("Authorization", "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(":" + EditorPrefs.GetString(SceneSyncSettigns.PREFS_KEY_SECRET))));
     }
 
+    public void LoginToServer(UserInfo info)
+    {
+        var uwr = UnityWebRequest.Post(_url + "/loginUser", JsonUtility.ToJson(info), "application/json");
+        AddAuthHeader(uwr);
+
+        var response = uwr.SendWebRequest();
+    }
     
     public void LogoutFromServer(UserInfo info)
     {
@@ -48,7 +57,7 @@ public class SceneSyncAPI
     public async UniTask SendCurrentScene(UserInfo info)
     {
         
-        var uwr = UnityWebRequest.Post(_url + "/sendUserInfo", JsonUtility.ToJson(info), "application/json");
+        var uwr = UnityWebRequest.Post(_url + "/updateUser", JsonUtility.ToJson(info), "application/json");
         AddAuthHeader(uwr);
         
         
@@ -57,13 +66,13 @@ public class SceneSyncAPI
 
     public bool Ping()
     {
-        var uwr = UnityWebRequest.PostWwwForm(_url + "/ping", "");
-        AddAuthHeader(uwr);
+        var uwr = UnityWebRequest.PostWwwForm(_url, "");
+        //AddAuthHeader(uwr);
         
         var response = uwr.SendWebRequest();
 
         while (!response.isDone) {}
 
-        return response.webRequest.responseCode == 200 ? true : false;
+        return response.webRequest.responseCode == 401 ? true : false;
     }
 }
