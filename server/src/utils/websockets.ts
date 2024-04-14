@@ -24,11 +24,26 @@ let messageHandlers: MessageHandlers[];
 // WebSockets only used to notify clients of changes to the user list
 export const setupWebSockets = (wss: Server) => {
   server = new WebSocket.Server({
-    server: wss,
+    noServer: true,
     path: "/api/scene/ws",
   });
 
   logger.info("WebSockets server started");
+
+  wss.on("upgrade", (request, socket, head) => {
+    console.log(request.headers);
+
+    if (request.headers["key"] !== process.env.SECRET_KEY) {
+      console.log("Invalid key");
+      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+      socket.destroy();
+      return;
+    }
+
+    server.handleUpgrade(request, socket, head, (ws) => {
+      server.emit("connection", ws, request);
+    });
+  });
 
   wss.on("connection", (ws: WebSocket) => {
     console.log(

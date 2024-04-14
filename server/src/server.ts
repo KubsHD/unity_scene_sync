@@ -1,6 +1,5 @@
 import express, { Application, Request, Response } from "express";
-// @ts-ignore
-import * as basicAuth from "express-basic-auth";
+const basicAuth = require("express-basic-auth");
 import pino from "pino";
 
 import { sceneInfoRouter } from "@/routes/sceneInfoRouter";

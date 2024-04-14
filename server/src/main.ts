@@ -3,6 +3,11 @@ import { env } from "@/utils/env";
 import { registerMessageHandler, setupWebSockets } from "@/utils/websockets";
 import { Server } from "http";
 
+if (env.SECRET_KEY === undefined) {
+  logger.error("SECRET_KEY not set");
+  process.exit(1);
+}
+
 const server: Server = app.listen(env.PORT, () => {
   const { NODE_ENV, HOST, PORT } = env;
   logger.info(`Server (${NODE_ENV}) running on port http://${HOST}:${PORT}`);
