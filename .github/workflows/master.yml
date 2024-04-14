@@ -4,33 +4,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-
-    - name: Build typescript
-      uses: actions/setup-node@v1
-      with:
-        node-version: 18.x
-    - run: |
-        cd server
-        npm install -g yarn && yarn && yarn build
-
-    - name: Copy repository contents via scp
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        port: ${{ secrets.PORT }}
-        key: ${{ secrets.SSHKEY }}
-        source: "./server"
-        target: ${{ secrets.SERVER_PATH }}
-
-    - name: Executing remote command
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        port: ${{ secrets.PORT }}
-        key: ${{ secrets.SSHKEY }}
-        script: |
-          cd ${{ secrets.SERVER_PATH }}/server
-          SECRET_KEY="${{ secrets.SECRET_KEY }}" NODE_ENV=production pm2 restart main --update-env
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: kubs/unity-scene-sync:latest
