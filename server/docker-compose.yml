@@ -4,6 +4,8 @@ services:
   web:
     image: kubs/unity-scene-sync:latest
     ports:
-      - "9050:3060"
+      - "9050:${PORT}"
     environment:
       - SECRET_KEY=${SECRET_KEY}
+      - PORT=${PORT}
+
