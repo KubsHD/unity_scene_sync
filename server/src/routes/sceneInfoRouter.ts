@@ -50,6 +50,8 @@ export const sceneInfoRouter: Router = (() => {
     );
 
     sendToAll(JSON.stringify(users));
+
+    res.sendStatus(200);
   });
 
   router.post("/getPeopleOnScene", async (req: Request, res: Response) => {
