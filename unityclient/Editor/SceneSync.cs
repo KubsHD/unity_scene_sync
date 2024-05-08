@@ -21,6 +21,7 @@ using FilePathAttribute = UnityEditor.FilePathAttribute;
 
 
 [UnityEditor.FilePath("STRB/SceneSync.state", FilePathAttribute.Location.PreferencesFolder)]
+[InitializeOnLoad]
 public class SceneSync : ScriptableSingleton<SceneSync>
 {
     public static string URL = "http://localhost:3001";
@@ -32,6 +33,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
     private static SceneSyncAPI _api;
     
     public static List<UserInfo> PeopleOnCurrentScene = new List<UserInfo>();
+
 
     private void OnEnable()
     {
@@ -77,11 +79,18 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         WebSocketThread();
         
         Debug.Log("Scene sync initalized! ");
-        
+
+        initialDataSend();
+    }
+    
+    private async void initialDataSend()
+    {
+        await UniTask.WaitUntil(() => _ws.State == WebSocketState.Open);
+
         _info.scene = SceneManager.GetActiveScene().name;
         _ = _api.SendCurrentScene(_info);
     }
-    
+
     private async void WebSocketThread()
     {
         var websocketUrl = URL.Replace("http", "ws") + "/api/scene/ws";

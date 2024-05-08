@@ -12,7 +12,14 @@ public class SceneUsersOverlay : Overlay
     private string _currentScene;
     
     public static SceneUsersOverlay Instance;
-    
+
+    public override void OnCreated()
+    {
+        base.OnCreated();
+
+        SceneSync.instance.TryConnect();
+    }
+
     public async void UpdateOverlayData(string a)
     {
         if (!EditorPrefs.GetBool(SceneSyncSettigns.PREFS_KEY_ENABLED))
