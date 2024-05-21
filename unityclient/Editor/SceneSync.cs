@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+using System.Threading;
 using NUnit;
 using UnityEditor;
 using UnityEditor.Overlays;
@@ -91,6 +92,21 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         _ = _api.SendCurrentScene(_info);
     }
 
+    async void WebsocketHeartbeat()
+    {
+        HeartbeatMessage msg;
+        msg.type = "heartbeat";
+        msg.content = DateTime.Now.ToUniversalTime().Ticks.ToString();
+
+        var bytes = System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(msg).ToString());
+
+        while (_ws.State == WebSocketState.Open)
+        {
+            await UniTask.WaitForSeconds(20);
+            await _ws.Send(bytes);
+        }
+    }
+
     private async void WebSocketThread()
     {
         var websocketUrl = URL.Replace("http", "ws") + "/api/scene/ws";
@@ -105,6 +121,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         {
             Debug.Log("Connection open!");
             SceneUsersOverlay.Instance.SetConnectionButtonVisibility(false);
+            WebsocketHeartbeat();
         };
 
         
