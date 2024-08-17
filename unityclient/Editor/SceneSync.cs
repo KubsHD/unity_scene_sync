@@ -180,6 +180,21 @@ public class SceneSync : ScriptableSingleton<SceneSync>
             
         return scene.lockedBy == user && scene.isLocked;
     }
+
+    public void TryLockScene()
+    {
+        _api.LockScene(SceneManager.GetActiveScene().name, _info);
+    }
+
+    public void TryUnlockScene()
+    {
+        _api.UnlockScene(SceneManager.GetActiveScene().name, _info);
+    }
+
+    public string GetUsername()
+    {
+        return _info.name;
+    }
 }
 
 

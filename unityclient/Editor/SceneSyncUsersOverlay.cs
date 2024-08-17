@@ -2,6 +2,7 @@
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Overlays;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using UnitySceneSync.Models;
 
@@ -16,6 +17,7 @@ public class SceneUsersOverlay : Overlay
     private ListView _userListView;
     
     private bool _isCurrentSceneLocked;
+    private bool _isCurrentSceneLockedByMe;
     
     private string _currentScene;
     
@@ -43,7 +45,18 @@ public class SceneUsersOverlay : Overlay
 
         foreach (var user in project.users)
         {
-            _userMappings[user.name] = project.scenes.Exists(x => x.lockedBy == user.name && x.name == _currentScene);
+            _userMappings[user.name] = project.scenes.Exists(x => x.lockedBy == user.name && x.name == SceneManager.GetActiveScene().name);
+        }
+        
+        _isCurrentSceneLockedByMe = SceneSync.instance.CheckIfUserLockedCurrentScene(SceneSync.instance.GetUsername());
+        
+        if (_isCurrentSceneLockedByMe)
+        {
+            _lockUnlockButton.text = "Unlock";
+        }
+        else
+        {
+            _lockUnlockButton.text = "Lock";
         }
         
         var inst = SceneSync.instance;
@@ -79,6 +92,7 @@ public class SceneUsersOverlay : Overlay
         
         _root = new VisualElement();
 
+        _root.style.height = new StyleLength(StyleKeyword.Auto);
         _root.style.justifyContent = Justify.SpaceBetween;
         
         _connectButton = new Button();
@@ -90,8 +104,14 @@ public class SceneUsersOverlay : Overlay
 
         _lockUnlockButton.clicked += () =>
         {
-            
-            //SceneSync.instance.TryLockScene();
+            if (_isCurrentSceneLockedByMe)
+            {
+                SceneSync.instance.TryUnlockScene();
+            }
+            else
+            {
+                SceneSync.instance.TryLockScene();
+            }
         };
         
         _userListLabel = new Label("");

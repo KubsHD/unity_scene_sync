@@ -75,4 +75,22 @@ public class SceneSyncAPI
 
         return response.webRequest.responseCode != 401;
     }
+
+    public void LockScene(string name, User info)
+    {
+        var data = JsonConvert.SerializeObject(new { scene = name, userId = info.name });
+        
+        var uwr = UnityWebRequest.Post(_url + "/lockScene", data, "application/json");
+        AddAuthHeader(uwr);
+
+        var response = uwr.SendWebRequest();
+    }
+    
+    public void UnlockScene(string name, User info)
+    {
+        var uwr = UnityWebRequest.Post(_url + "/unlockScene", JsonConvert.SerializeObject(new{scene = name, userId = info.name}), "application/json");
+        AddAuthHeader(uwr);
+
+        var response = uwr.SendWebRequest();
+    }
 }
