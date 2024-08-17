@@ -16,8 +16,3 @@ export class User {
     this.time = Date.now();
   }
 }
-
-export class Project {
-  id: string = "";
-  users: User[] = [];
-}

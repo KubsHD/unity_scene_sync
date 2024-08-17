@@ -1,0 +1,50 @@
+package storbeed.scenesync;
+option csharp_namespace = "storbeed.scenesync.proto";
+
+import "types.proto";
+
+message UserRequest {
+required string id = 1;
+required string name = 2;
+required string color = 3;
+required string scene = 4;
+}
+
+message UserResponse {
+  repeated User users = 1;
+}
+
+message SceneRequest {
+    required string scene = 1;
+}
+
+message SceneResponse {
+  repeated Scene scenes = 1;
+}
+
+message LockSceneRequest {
+required string scene = 1;
+}
+
+message LockSceneResponse {
+  repeated Scene scenes = 1;
+}
+
+message UpdateUserRequest {
+required string id = 1;
+required string name = 2;
+required string color = 3;
+required string scene = 4;
+}
+
+message UpdateUserResponse {
+  repeated User users = 1;
+}
+
+message LogoutUserRequest {
+required string id = 1;
+}
+
+message LogoutUserResponse {
+  repeated User users = 1;
+}

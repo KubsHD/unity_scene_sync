@@ -2,6 +2,7 @@ import { app, logger } from "@/server";
 import { env } from "@/utils/env";
 import { registerMessageHandler, setupWebSockets } from "@/utils/websockets";
 import { Server } from "http";
+import { sceneInfoService } from "./service/sceneInfoService";
 
 if (env.SECRET_KEY === undefined) {
   logger.error("SECRET_KEY not set");

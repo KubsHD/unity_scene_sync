@@ -1,0 +1,20 @@
+package storbeed.scenesync;
+option csharp_namespace = "storbeed.scenesync.proto";
+
+message User {
+    required string id = 1;
+    required string name = 2;
+    required string scene = 3;
+}
+
+message Scene {
+    required string name = 1;
+    repeated User lockedBy = 2;
+    required bool isLocked = 3;
+}
+
+message Project {
+    required string name = 1;
+    repeated User users = 2;
+    repeated Scene scenes = 3;
+}

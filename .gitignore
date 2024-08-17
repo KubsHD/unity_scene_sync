@@ -1,2 +1,4 @@
 node_modules/
 dist/
+server/src/protos.d.ts
+server/src/protos.js

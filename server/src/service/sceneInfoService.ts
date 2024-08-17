@@ -7,7 +7,7 @@ const getProject = (project: string) => {
   const foundProject = Database.projects.find((p) => p.id == project);
   if (foundProject) return foundProject;
   else {
-    Database.projects.push({ id: project, users: [] });
+    Database.projects.push({ id: project, users: [], scenes: [] });
     return Database.projects.find((p) => p.id == project);
   }
 };
@@ -77,4 +77,5 @@ export const sceneInfoService = {
 
     return structuredClone(project.users);
   },
+  handleHeartbeat: async (message: any) => {},
 };

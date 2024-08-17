@@ -5,6 +5,9 @@ import { sceneInfoService } from "@/service/sceneInfoService";
 import { Database } from "@/db/database";
 import { sendToAll } from "@/utils/websockets";
 
+import { storbeed } from "@/protos";
+import { sceneLockService } from "@/service/sceneLockService";
+
 export const sceneInfoRouter: Router = (() => {
   const router: Router = Router({ mergeParams: true });
 
@@ -18,7 +21,7 @@ export const sceneInfoRouter: Router = (() => {
 
     logger.debug(users);
 
-    sendToAll(JSON.stringify(users));
+    sendToAll(JSON.stringify(Database.getProjectById(req.params.project)));
 
     res.sendStatus(200);
   });
@@ -33,7 +36,7 @@ export const sceneInfoRouter: Router = (() => {
       req.body.id
     );
 
-    sendToAll(JSON.stringify(users));
+    sendToAll(JSON.stringify(Database.getProjectById(req.params.project)));
 
     res.sendStatus(200);
   });
@@ -49,7 +52,7 @@ export const sceneInfoRouter: Router = (() => {
       req.body
     );
 
-    sendToAll(JSON.stringify(users));
+    sendToAll(JSON.stringify(Database.getProjectById(req.params.project)));
 
     res.sendStatus(200);
   });
@@ -58,6 +61,32 @@ export const sceneInfoRouter: Router = (() => {
     res.send(
       await sceneInfoService.getSceneInfo(req.params.project, req.body.scene)
     );
+  });
+
+  router.post("/lockScene", async (req: Request, res: Response) => {
+    logger.info(req.params.project + ": " + req.body.scene + " is locked");
+
+    const result = sceneLockService.lockScene(
+      req.params.project,
+      req.body.scene,
+      req.body.userId
+    );
+
+    sendToAll(JSON.stringify(Database.getProjectById(req.params.project)));
+
+    res.sendStatus(200);
+  });
+
+  router.post("/unlockScene", async (req: Request, res: Response) => {
+    const result = sceneLockService.unlockScene(
+      req.params.project,
+      req.body.scene,
+      req.body.userId
+    );
+
+    sendToAll(JSON.stringify(Database.getProjectById(req.params.project)));
+
+    res.sendStatus(200);
   });
 
   return router;
