@@ -91,7 +91,7 @@ public class SceneUsersOverlay : Overlay
         _lockUnlockButton.clicked += () =>
         {
             
-            SceneSync.instance.TryLockScene();
+            //SceneSync.instance.TryLockScene();
         };
         
         _userListLabel = new Label("");
