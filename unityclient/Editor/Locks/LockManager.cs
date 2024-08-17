@@ -15,7 +15,10 @@ public class LockManager : UnityEditor.AssetModificationProcessor
             if (path.EndsWith(".unity"))
             {
                 var sceneName = path.Substring(path.LastIndexOf('/') + 1);
-                if (SceneSync.instance.GetLockedScenes().Contains(sceneName))
+                sceneName = sceneName.Substring(0, sceneName.Length - 6);
+                var lockedScenes = SceneSync.instance.GetLockedScenes();
+                
+                if (lockedScenes.Contains(sceneName))
                 {
                     SceneView.lastActiveSceneView.ShowNotification(
                         new GUIContent("Scena zablokowana, zmiany nie zostały zapisane!"));

@@ -2,6 +2,7 @@
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Overlays;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 using UnitySceneSync.Models;
@@ -21,8 +22,6 @@ public class SceneUsersOverlay : Overlay
     
     private string _currentScene;
     
-    private Dictionary<string, bool> _userMappings = new Dictionary<string, bool>();
-    
     public static SceneUsersOverlay Instance;
 
     public override void OnCreated()
@@ -31,33 +30,44 @@ public class SceneUsersOverlay : Overlay
 
         SceneSync.instance.TryConnect();
     }
+
+    private List<User> _filteredUsers = new List<User>();
     
-    public async void UpdateProjectInfo(Project project)
+    public async void UpdateProjectInfo(SceneInfo scene, User[] users, bool isSceneLocked, bool isSceneLockedByMe)
     {
         //Debug.Log("Updating clients from websocket");
         _userListLabel.text = $"Pobieranie danych...";
-            
-        //await SceneSync.SendCurrentScene(a);
-            
         _userListLabel.text = $"Users on current scene: \n";
 
-        _userListView.itemsSource = project.users;
-
-        foreach (var user in project.users)
-        {
-            _userMappings[user.name] = project.scenes.Exists(x => x.lockedBy == user.name && x.name == SceneManager.GetActiveScene().name);
-        }
+        _filteredUsers = users.ToList();
+        _isCurrentSceneLockedByMe = isSceneLockedByMe;
+        _isCurrentSceneLocked = isSceneLocked;
         
-        _isCurrentSceneLockedByMe = SceneSync.instance.CheckIfUserLockedCurrentScene(SceneSync.instance.GetUsername());
-        
-        if (_isCurrentSceneLockedByMe)
+        if (_isCurrentSceneLocked && !_isCurrentSceneLockedByMe)
         {
-            _lockUnlockButton.text = "Unlock";
+            // scene locked by someone else
+            
+            if (users.Any(x=> x.name == scene.lockedBy) == false)
+            {
+                User u = new User();
+                u.name = scene.lockedBy;
+                u.time = -1;
+                _filteredUsers.Add(u);
+            }
+            
+            _lockUnlockButton.SetEnabled(false);
         }
         else
         {
-            _lockUnlockButton.text = "Lock";
+            _lockUnlockButton.SetEnabled(true);
+            
+            if (_isCurrentSceneLockedByMe)
+                _lockUnlockButton.text = "Unlock";
+            else
+                _lockUnlockButton.text = "Lock";
         }
+        
+        _userListView.itemsSource = _filteredUsers;
         
         var inst = SceneSync.instance;
         _userListView.bindItem = (element, i) =>
@@ -66,9 +76,14 @@ public class SceneUsersOverlay : Overlay
             var nameLabel = element.Q<Label>();
             var lockIcon = element.Q<Image>();
 
+            nameLabel.text = _filteredUsers[i].name;
+            
+            if (_filteredUsers[i].time == -1)
+                nameLabel.style.color = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
+            else
+                nameLabel.style.color = new StyleColor(new Color(1, 1, 1));
 
-            nameLabel.text = _userMappings.ElementAt(i).Key;
-            lockIcon.style.display = _userMappings.ElementAt(i).Value ? DisplayStyle.Flex : DisplayStyle.None;
+            lockIcon.style.display = _filteredUsers[i].name == scene.lockedBy ? DisplayStyle.Flex : DisplayStyle.None;
         };
 
         _userListView.RefreshItems();
@@ -79,9 +94,15 @@ public class SceneUsersOverlay : Overlay
     public void SetConnectionButtonVisibility(bool enabled)
     {
         if (enabled)
+        {
+            _lockUnlockButton.style.display = DisplayStyle.None;
             _root.Add(_connectButton);
+        }
         else
+        {
+            _lockUnlockButton.style.display = DisplayStyle.Flex;
             _connectButton.RemoveFromHierarchy();
+        }
     }
     
     public override VisualElement CreatePanelContent()
@@ -101,6 +122,7 @@ public class SceneUsersOverlay : Overlay
         _lockUnlockButton = new Button();
         _lockUnlockButton.text = "Lock";
         _lockUnlockButton.SetEnabled(true);
+        _lockUnlockButton.style.display = DisplayStyle.None;
 
         _lockUnlockButton.clicked += () =>
         {

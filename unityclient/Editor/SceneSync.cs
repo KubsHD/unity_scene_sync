@@ -35,6 +35,9 @@ public class SceneSync : ScriptableSingleton<SceneSync>
 
     private static SceneSyncAPI _api;
 
+    private bool _isCurrentSceneLocked;
+    private bool _isCurrentSceneLockedByMe;
+    
     public static Project ProjectInfo;
 
     private void OnEnable()
@@ -50,7 +53,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
 
     public List<string> GetLockedScenes()
     {
-        return ProjectInfo.scenes.Where(x => x.isLocked).Select(x => x.name).ToList();
+        return ProjectInfo.scenes.Where(x => x.isLocked && x.lockedBy != _info.name).Select(x => x.name).ToList();
     }
     
     public void TryConnect()
@@ -59,7 +62,6 @@ public class SceneSync : ScriptableSingleton<SceneSync>
 
         _api = new SceneSyncAPI(URL, PlayerSettings.productName);
 
-    
         
         if (!_api.Ping())
         {
@@ -67,6 +69,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
             return;
         }
 
+        
         _info.name = Environment.UserName;
         _info.id = SystemInfo.deviceUniqueIdentifier;
         _info.scene = SceneManager.GetActiveScene().name;
@@ -149,7 +152,17 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         _ws.OnMessage += (bytes) =>
         {
             ProjectInfo = JsonConvert.DeserializeObject<Project>(Encoding.ASCII.GetString(bytes, 0, bytes.Length));
-            SceneUsersOverlay.Instance.UpdateProjectInfo(ProjectInfo);   
+            
+            _isCurrentSceneLocked = ProjectInfo.scenes.Exists(x => x.name == _info.scene && x.isLocked);
+            _isCurrentSceneLockedByMe = CheckIfUserLockedCurrentScene(GetUsername());
+            
+            // get all users that either are on scene or lock one or more scenes
+            var users = ProjectInfo.users;
+            users = users.Where(x => x.scene == _info.scene).ToList();
+            
+            SceneUsersOverlay.Instance.UpdateProjectInfo(ProjectInfo.scenes.First(
+                    x => x.name == _info.scene),
+                users.ToArray(), _isCurrentSceneLocked, _isCurrentSceneLockedByMe);
         };
         
         
@@ -163,8 +176,6 @@ public class SceneSync : ScriptableSingleton<SceneSync>
     
     static void updateWebSocket()
     {
-        var pos = SceneView.lastActiveSceneView.camera.transform.position;
-        
         _ws.DispatchMessageQueue();
     }
 
