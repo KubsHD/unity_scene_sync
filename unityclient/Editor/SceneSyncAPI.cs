@@ -24,7 +24,7 @@ public class SceneSyncAPI
         uwr.SetRequestHeader("Authorization", "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(":" + EditorPrefs.GetString(SceneSyncSettigns.PREFS_KEY_SECRET))));
     }
 
-    public void LoginToServer(UserInfo info)
+    public void LoginToServer(User info)
     {
         var uwr = UnityWebRequest.Post(_url + "/loginUser", JsonUtility.ToJson(info), "application/json");
         AddAuthHeader(uwr);
@@ -32,7 +32,7 @@ public class SceneSyncAPI
         var response = uwr.SendWebRequest();
     }
     
-    public void LogoutFromServer(UserInfo info)
+    public void LogoutFromServer(User info)
     {
         var uwr = UnityWebRequest.Post(_url + "/logoutUser", JsonUtility.ToJson(info), "application/json");
         AddAuthHeader(uwr);
@@ -41,7 +41,7 @@ public class SceneSyncAPI
     }
 
 
-    public async UniTask<List<UserInfo>> GetUsers(string scn)
+    public async UniTask<List<User>> GetUsers(string scn)
     {
         var uwr = UnityWebRequest.Post(_url + "/getPeopleOnScene", "{\"scene\": \"" + scn + "\"}", "application/json");
         AddAuthHeader(uwr);
@@ -51,10 +51,10 @@ public class SceneSyncAPI
         
         //Debug.Log(response.downloadHandler.text);
         
-        return JsonConvert.DeserializeObject<List<UserInfo>>(response.downloadHandler.text);
+        return JsonConvert.DeserializeObject<List<User>>(response.downloadHandler.text);
     }
 
-    public async UniTask SendCurrentScene(UserInfo info)
+    public async UniTask SendCurrentScene(User info)
     {
         
         var uwr = UnityWebRequest.Post(_url + "/updateUser", JsonUtility.ToJson(info), "application/json");
@@ -67,12 +67,12 @@ public class SceneSyncAPI
     public bool Ping()
     {
         var uwr = UnityWebRequest.PostWwwForm(_url, "");
-        //AddAuthHeader(uwr);
+        AddAuthHeader(uwr);
         
         var response = uwr.SendWebRequest();
 
         while (!response.isDone) {}
 
-        return response.webRequest.responseCode == 401 ? true : false;
+        return response.webRequest.responseCode != 401;
     }
 }

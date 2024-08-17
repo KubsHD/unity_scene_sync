@@ -1,15 +1,25 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Overlays;
 using UnityEngine.UIElements;
+using UnitySceneSync.Models;
 
-[Overlay(typeof(SceneView), "Scene sync")]
+[Overlay(typeof(SceneView), "Users on scene")]
 public class SceneUsersOverlay : Overlay
 {
-    Label _label;
-    private Button _connectButton;
     private VisualElement _root;
+
+    Label _userListLabel;
+    private Button _connectButton;
+    private Button _lockUnlockButton;
+    private ListView _userListView;
+    
+    private bool _isCurrentSceneLocked;
+    
     private string _currentScene;
+    
+    private Dictionary<string, bool> _userMappings = new Dictionary<string, bool>();
     
     public static SceneUsersOverlay Instance;
 
@@ -19,44 +29,37 @@ public class SceneUsersOverlay : Overlay
 
         SceneSync.instance.TryConnect();
     }
-
-    public async void UpdateOverlayData(string a)
-    {
-        if (!EditorPrefs.GetBool(SceneSyncSettigns.PREFS_KEY_ENABLED))
-        {
-            _label.text = $"Disabled";
-            return;
-        }
-
-        SceneSync.URL = EditorPrefs.GetString(SceneSyncSettigns.PREFS_KEY_URL);
-            
-        _label.text = $"Pobieranie danych...";
-            
-        // await SceneSync.SendCurrentScene(a);
-        // SceneSync.PeopleOnCurrentScene = await SceneSync.GetUsers(a);
-            
-        _label.text = $"People on scene: {SceneSync.PeopleOnCurrentScene.Count} \n";
-
-        foreach (var info in SceneSync.PeopleOnCurrentScene)
-        {
-            _label.text += info.name + "\n";
-        }
-    }
     
-    public async void UpdateUserList(List<UserInfo> users)
+    public async void UpdateProjectInfo(Project project)
     {
         //Debug.Log("Updating clients from websocket");
-        _label.text = $"Pobieranie danych...";
+        _userListLabel.text = $"Pobieranie danych...";
             
         //await SceneSync.SendCurrentScene(a);
             
-        _label.text = $"People on scene: {users.Count} \n";
+        _userListLabel.text = $"Users on current scene: \n";
 
-        foreach (var info in users)
+        _userListView.itemsSource = project.users;
+
+        foreach (var user in project.users)
         {
-            //                                        don't add newline for the last user
-            _label.text += info.name + (users.IndexOf(info) == users.Count - 1 ? "" : "\n");
+            _userMappings[user.name] = project.scenes.Exists(x => x.lockedBy == user.name && x.name == _currentScene);
         }
+        
+        var inst = SceneSync.instance;
+        _userListView.bindItem = (element, i) =>
+        {
+            // Bind the username to the label
+            var nameLabel = element.Q<Label>();
+            var lockIcon = element.Q<Image>();
+
+
+            nameLabel.text = _userMappings.ElementAt(i).Key;
+            lockIcon.style.display = _userMappings.ElementAt(i).Value ? DisplayStyle.Flex : DisplayStyle.None;
+        };
+
+        _userListView.RefreshItems();
+        _userListView.Rebuild();
     }
 
 
@@ -75,18 +78,66 @@ public class SceneUsersOverlay : Overlay
         
         
         _root = new VisualElement();
+
+        _root.style.justifyContent = Justify.SpaceBetween;
         
         _connectButton = new Button();
         _connectButton.text = "Connect";
         
-        _label = new Label("");
+        _lockUnlockButton = new Button();
+        _lockUnlockButton.text = "Lock";
+        _lockUnlockButton.SetEnabled(true);
 
+        _lockUnlockButton.clicked += () =>
+        {
+            
+            SceneSync.instance.TryLockScene();
+        };
+        
+        _userListLabel = new Label("");
         _connectButton.clicked += () =>
         {
             SceneSync.instance.TryConnect();
         };
         
-        _root.Add(_label);
+        
+        _userListView = new ListView();
+        
+        _userListView.selectionType = SelectionType.None;
+        _userListView.style.flexGrow = 0.0f;
+        _userListView.style.maxHeight = 100;
+        
+        _userListView.makeItem = () =>
+        {
+            VisualElement container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Row;
+            container.style.justifyContent = Justify.SpaceBetween;
+            container.style.alignItems = Align.Center;
+
+            // Create a label for the username
+            Label nameLabel = new Label();
+            nameLabel.style.flexGrow = 1;
+            container.Add(nameLabel);
+
+            
+            var tex = EditorGUIUtility.IconContent("P4_LockedRemote").image;
+            
+            // Create the lock icon
+            VisualElement lockIcon = new Image()
+            {
+                image = tex
+            };
+            lockIcon.style.width = 16;
+            lockIcon.style.height = 16;
+            container.Add(lockIcon);
+
+            return container;
+        };
+        
+ 
+        _root.Add(_userListLabel);
+        _root.Add(_userListView);
+        _root.Add(_lockUnlockButton);
         _root.Add(_connectButton);
 
         return _root;
@@ -94,6 +145,6 @@ public class SceneUsersOverlay : Overlay
 
     public void ClearList()
     {
-        _label.text = "";
+        _userListLabel.text = "";
     }
 }

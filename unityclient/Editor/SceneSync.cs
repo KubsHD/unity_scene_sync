@@ -16,10 +16,12 @@ using Sirenix.OdinInspector;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Protobuf;
 using NativeWebSocket;
 using UnityEngine.SceneManagement;
 using FilePathAttribute = UnityEditor.FilePathAttribute;
-
+using UnitySceneSync.Models;
+using Newtonsoft.Json;
 
 [UnityEditor.FilePath("STRB/SceneSync.state", FilePathAttribute.Location.PreferencesFolder)]
 [InitializeOnLoad]
@@ -27,14 +29,13 @@ public class SceneSync : ScriptableSingleton<SceneSync>
 {
     public static string URL = "http://localhost:3001";
 
-    private static UserInfo _info;
+    private static User _info;
     private static Task _wsTask;
     private static WebSocket _ws;
 
     private static SceneSyncAPI _api;
-    
-    public static List<UserInfo> PeopleOnCurrentScene = new List<UserInfo>();
 
+    public static Project ProjectInfo;
 
     private void OnEnable()
     {
@@ -47,6 +48,11 @@ public class SceneSync : ScriptableSingleton<SceneSync>
             _ws.Close();
     }
 
+    public List<string> GetLockedScenes()
+    {
+        return ProjectInfo.scenes.Where(x => x.isLocked).Select(x => x.name).ToList();
+    }
+    
     public void TryConnect()
     {
         URL = EditorPrefs.GetString(SceneSyncSettigns.PREFS_KEY_URL);
@@ -142,10 +148,10 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         
         _ws.OnMessage += (bytes) =>
         {
-            var userList = SceneSync.DeserializeUserInfos(Encoding.ASCII.GetString(bytes, 0, bytes.Length));
-            PeopleOnCurrentScene = userList;
-            SceneUsersOverlay.Instance.UpdateUserList(userList);
+            ProjectInfo = JsonConvert.DeserializeObject<Project>(Encoding.ASCII.GetString(bytes, 0, bytes.Length));
+            SceneUsersOverlay.Instance.UpdateProjectInfo(ProjectInfo);   
         };
+        
         
         EditorApplication.update += () => SceneSync.updateWebSocket();
         
@@ -161,13 +167,18 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         
         _ws.DispatchMessageQueue();
     }
-    
 
-
-    public static List<UserInfo> DeserializeUserInfos(string jsonString)
+    public bool CheckIfUserLockedCurrentScene(string user)
     {
-        var list = JsonConvert.DeserializeObject<List<UserInfo>>(jsonString);
-        return list.Where(u => u.scene == _info.scene).ToList();
+        var isScene = ProjectInfo.scenes.Exists(x => x.name == SceneManager.GetActiveScene().name);
+        
+        if (!isScene)
+            return false;
+                
+        var scene = ProjectInfo.scenes.First(x => x.name == SceneManager.GetActiveScene().name);
+                
+            
+        return scene.lockedBy == user && scene.isLocked;
     }
 }
 

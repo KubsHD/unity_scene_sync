@@ -1,9 +1,9 @@
 ﻿using System;
 
-public struct UserInfo
+public struct User
 {
-    public String name;
     public String id;
+    public String name;
     public String scene;
-    public int date;
+    public Int64 time;
 }
