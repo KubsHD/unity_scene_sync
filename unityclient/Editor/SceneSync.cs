@@ -159,9 +159,10 @@ public class SceneSync : ScriptableSingleton<SceneSync>
             // get all users that either are on scene or lock one or more scenes
             var users = ProjectInfo.users;
             users = users.Where(x => x.scene == _info.scene).ToList();
+
+            var scene = ProjectInfo.scenes.FirstOrDefault(x => x.name == _info.scene);
             
-            SceneUsersOverlay.Instance.UpdateProjectInfo(ProjectInfo.scenes.First(
-                    x => x.name == _info.scene),
+            SceneUsersOverlay.Instance.UpdateProjectInfo(scene,
                 users.ToArray(), _isCurrentSceneLocked, _isCurrentSceneLockedByMe);
         };
         
