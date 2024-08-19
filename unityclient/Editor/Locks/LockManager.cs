@@ -5,10 +5,19 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class LockManager : UnityEditor.AssetModificationProcessor
+public enum SaveFailReason
+{
+    OK,
+    LOCKED_SCENE,
+    SCENE_NOT_CHECKED_OUT
+}
+
+public class LockManager : AssetModificationProcessor
 {
     private static string[] OnWillSaveAssets(string[] paths)
     {
+        SaveFailReason reason = SaveFailReason.OK;
+        
         List<string> okPaths = new List<string>();
         foreach (var path in paths)
         {
@@ -20,8 +29,13 @@ public class LockManager : UnityEditor.AssetModificationProcessor
                 
                 if (lockedScenes.Contains(sceneName))
                 {
-                    SceneView.lastActiveSceneView.ShowNotification(
-                        new GUIContent("Scena zablokowana, zmiany nie zostały zapisane!"));
+                    reason = SaveFailReason.LOCKED_SCENE;
+                    continue;
+                }
+
+                if (!SceneSync.instance.CheckIfUserLockedCurrentScene(SceneSync.instance.GetUsername()))
+                {
+                    reason = SaveFailReason.SCENE_NOT_CHECKED_OUT;
                     continue;
                 }
             }
@@ -29,6 +43,19 @@ public class LockManager : UnityEditor.AssetModificationProcessor
             okPaths.Add(path);
         }
 
+        switch (reason)
+        {
+            case SaveFailReason.OK:
+                break;
+            case SaveFailReason.LOCKED_SCENE:
+                SceneView.lastActiveSceneView.ShowNotification(
+                    new GUIContent("Scena zablokowana, zmiany nie zostały zapisane!"));
+                break;
+            case SaveFailReason.SCENE_NOT_CHECKED_OUT:
+                SceneView.lastActiveSceneView.ShowNotification(
+                    new GUIContent("Musisz najpierw zablokować scene aby zapisać zmiany!"));
+                break;
+        }
         
         return okPaths.ToArray();
     }
