@@ -29,6 +29,9 @@ public class SceneSyncSettigns : EditorWindow
     private void OnGUI()
     {
         _url = EditorGUILayout.TextField("Server URL", _url);
+        if (_url.EndsWith("/"))
+            _url = _url.Substring(0, _url.Length - 1);
+        
         _enabled = EditorGUILayout.Toggle("Enabled", _enabled);
         _secret = EditorGUILayout.TextField("Secret", _secret);
 

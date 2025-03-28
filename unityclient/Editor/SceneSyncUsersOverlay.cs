@@ -47,10 +47,13 @@ public class SceneUsersOverlay : Overlay
         {
             // scene locked by someone else
             
-            if (users.Any(x=> x.name == scene.lockedBy) == false)
+            if (users.Any(x=> x.id == scene.lockedBy) == false)
             {
+                var dbUser = users.First(x => x.id == scene.lockedBy);
+                
                 User u = new User();
-                u.name = scene.lockedBy;
+                u.name = dbUser.name;
+                //u.device = dbUser.device;
                 u.time = -1;
                 _filteredUsers.Add(u);
             }
@@ -83,7 +86,7 @@ public class SceneUsersOverlay : Overlay
             else
                 nameLabel.style.color = new StyleColor(new Color(1, 1, 1));
 
-            lockIcon.style.display = _filteredUsers[i].name == scene.lockedBy ? DisplayStyle.Flex : DisplayStyle.None;
+            lockIcon.style.display = _filteredUsers[i].id == scene.lockedBy ? DisplayStyle.Flex : DisplayStyle.None;
         };
 
         _userListView.RefreshItems();

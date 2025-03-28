@@ -9,7 +9,8 @@ public enum SaveFailReason
 {
     OK,
     LOCKED_SCENE,
-    SCENE_NOT_CHECKED_OUT
+    SCENE_NOT_CHECKED_OUT,
+    PENDING_CHANGES_FROM_VCS
 }
 
 public class LockManager : AssetModificationProcessor
@@ -33,7 +34,7 @@ public class LockManager : AssetModificationProcessor
                     continue;
                 }
 
-                if (!SceneSync.instance.CheckIfUserLockedCurrentScene(SceneSync.instance.GetUsername()))
+                if (!SceneSync.instance.CheckIfUserLockedCurrentScene(SceneSync.instance.GetUserInfo()))
                 {
                     reason = SaveFailReason.SCENE_NOT_CHECKED_OUT;
                     continue;

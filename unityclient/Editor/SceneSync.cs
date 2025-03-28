@@ -53,7 +53,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
 
     public List<string> GetLockedScenes()
     {
-        return ProjectInfo.scenes.Where(x => x.isLocked && x.lockedBy != _info.name).Select(x => x.name).ToList();
+        return ProjectInfo.scenes.Where(x => x.isLocked && x.lockedBy != _info.id).Select(x => x.name).ToList();
     }
     
     public void TryConnect()
@@ -72,6 +72,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         
         _info.name = Environment.UserName;
         _info.id = SystemInfo.deviceUniqueIdentifier;
+        //_info.device = SystemInfo.deviceName;
         _info.scene = SceneManager.GetActiveScene().name;
         
         // setup unity callbacks
@@ -154,7 +155,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
             ProjectInfo = JsonConvert.DeserializeObject<Project>(Encoding.ASCII.GetString(bytes, 0, bytes.Length));
             
             _isCurrentSceneLocked = ProjectInfo.scenes.Exists(x => x.name == _info.scene && x.isLocked);
-            _isCurrentSceneLockedByMe = CheckIfUserLockedCurrentScene(GetUsername());
+            _isCurrentSceneLockedByMe = CheckIfUserLockedCurrentScene(GetUserInfo());
             
             // get all users that either are on scene or lock one or more scenes
             var users = ProjectInfo.users;
@@ -180,7 +181,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         _ws.DispatchMessageQueue();
     }
 
-    public bool CheckIfUserLockedCurrentScene(string user)
+    public bool CheckIfUserLockedCurrentScene(User user)
     {
         var isScene = ProjectInfo.scenes.Exists(x => x.name == SceneManager.GetActiveScene().name);
         
@@ -190,7 +191,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         var scene = ProjectInfo.scenes.First(x => x.name == SceneManager.GetActiveScene().name);
                 
             
-        return scene.lockedBy == user && scene.isLocked;
+        return scene.lockedBy == user.id && scene.isLocked;
     }
 
     public void TryLockScene()
@@ -206,6 +207,11 @@ public class SceneSync : ScriptableSingleton<SceneSync>
     public string GetUsername()
     {
         return _info.name;
+    }
+    
+    public User GetUserInfo()
+    {
+        return _info;
     }
 }
 

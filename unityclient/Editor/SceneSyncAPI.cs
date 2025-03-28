@@ -78,7 +78,7 @@ public class SceneSyncAPI
 
     public void LockScene(string name, User info)
     {
-        var data = JsonConvert.SerializeObject(new { scene = name, userId = info.name });
+        var data = JsonConvert.SerializeObject(new { scene = name, userId = info.id });
         
         var uwr = UnityWebRequest.Post(_url + "/lockScene", data, "application/json");
         AddAuthHeader(uwr);
@@ -88,7 +88,7 @@ public class SceneSyncAPI
     
     public void UnlockScene(string name, User info)
     {
-        var uwr = UnityWebRequest.Post(_url + "/unlockScene", JsonConvert.SerializeObject(new{scene = name, userId = info.name}), "application/json");
+        var uwr = UnityWebRequest.Post(_url + "/unlockScene", JsonConvert.SerializeObject(new{scene = name, userId = info.id}), "application/json");
         AddAuthHeader(uwr);
 
         var response = uwr.SendWebRequest();
