@@ -2,6 +2,7 @@ import { logger } from "@/server";
 import { Server } from "http";
 import * as WebSocket from "ws";
 import { z } from "zod";
+import { env } from "./env";
 
 interface MessageHandlers {
   key: string;
@@ -11,8 +12,9 @@ interface MessageHandlers {
 
 // array of message handlers to be registered with thier typesafe schema
 
-let server: WebSocket.Server;
-let messageHandlers: MessageHandlers[];
+let webSocketServer: WebSocket.Server;
+let messageHandlers: MessageHandlers[] = [];
+let users: Map<string, WebSocket.WebSocket> = new Map();
 
 // payload structure
 // {
@@ -22,37 +24,39 @@ let messageHandlers: MessageHandlers[];
 //  }
 
 // WebSockets only used to notify clients of changes to the user list
-export const setupWebSockets = (wss: Server) => {
-  server = new WebSocket.Server({
+export const setupWebSockets = (httpServer: Server) => {
+  webSocketServer = new WebSocket.Server({
     noServer: true,
+    clientTracking: true,
     path: "/api/scene/ws",
   });
 
   logger.info("WebSockets server started");
 
-  wss.on("upgrade", (request, socket, head) => {
-    console.log(request.headers);
-
-    if (request.headers["key"] !== process.env.SECRET_KEY) {
-      console.log("Invalid key");
+  httpServer.on("upgrade", (request, socket, head) => {
+    if (request.headers["key"] !== env.SECRET_KEY) {
+      console.error("Invalid key: " + request.headers["key"]);
       socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
       socket.destroy();
       return;
     }
 
-    server.handleUpgrade(request, socket, head, (ws) => {
-      server.emit("connection", ws, request);
+    webSocketServer.handleUpgrade(request, socket, head, (ws) => {
+      webSocketServer.emit("connection", ws, request);
     });
   });
 
-  wss.on("connection", (ws: WebSocket) => {
-    console.log(
-      "Client connected, total clients: " + (server.clients.size + 1)
-    );
+  webSocketServer.on("connection", (ws: WebSocket) => {
+    // @ts-ignore
+    ws.uuid = crypto.randomUUID(); // Assign a unique ID to the WebSocket connection
+    // @ts-ignore
+    users.set(ws.uuid, ws); // Store the WebSocket connection in the users map
+
+    logger.info("Client connected, total clients: " + users.size);
 
     // Handle incoming messages from the client
     ws.on("message", (message: string) => {
-      console.log(`Received message: ${message}`);
+      logger.info(`Received message: ${message}`);
 
       let parsedMessage: any;
       try {
@@ -70,8 +74,11 @@ export const setupWebSockets = (wss: Server) => {
     });
 
     ws.on("close", () => {
-      console.log(
-        "Client disconnected, total clients: " + (server.clients.size - 1)
+      // @ts-ignore
+      users.delete(ws.uuid); // Remove the WebSocket connection from the users map
+
+      logger.info(
+        `Client disconnected, total clients: ${webSocketServer.clients.size}`
       );
     });
   });
@@ -80,7 +87,7 @@ export const setupWebSockets = (wss: Server) => {
 export const sendToAll = (message: any) => {
   logger.info("Sending message to all clients: " + message);
 
-  server.clients.forEach((client: WebSocket.WebSocket) => {
+  webSocketServer.clients.forEach((client: WebSocket.WebSocket) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }

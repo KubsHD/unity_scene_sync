@@ -33,6 +33,8 @@ public class SceneSync : ScriptableSingleton<SceneSync>
     private static Task _wsTask;
     private static WebSocket _ws;
 
+    private bool _connectionOpen;
+
     private static SceneSyncAPI _api;
 
     private bool _isCurrentSceneLocked;
@@ -102,7 +104,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         _ = _api.SendCurrentScene(_info);
     }
 
-    async void WebsocketHeartbeat()
+    async Task WebsocketHeartbeat()
     {
         HeartbeatMessage msg;
         msg.type = "heartbeat";
@@ -110,9 +112,13 @@ public class SceneSync : ScriptableSingleton<SceneSync>
 
         var bytes = System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(msg).ToString());
 
-        while (_ws.State == WebSocketState.Open)
+        Debug.Log("heartbeat: " + _ws.State);
+        
+        while (_connectionOpen)
         {
-            await UniTask.WaitForSeconds(20);
+            await UniTask.WaitForSeconds(0.3f);
+            if (_connectionOpen)
+                return;
             await _ws.Send(bytes);
         }
     }
@@ -131,7 +137,8 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         {
             Debug.Log("Connection open!");
             SceneUsersOverlay.Instance.SetConnectionButtonVisibility(false);
-            WebsocketHeartbeat();
+            _connectionOpen = true;
+            _ = WebsocketHeartbeat();
         };
 
         
@@ -144,6 +151,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         {
             Debug.Log("Connection closed!");
             
+            _connectionOpen = false;
             
             SceneUsersOverlay.Instance.ClearList();
             SceneUsersOverlay.Instance.SetConnectionButtonVisibility(true);
@@ -196,6 +204,17 @@ public class SceneSync : ScriptableSingleton<SceneSync>
 
     public void TryLockScene()
     {
+        #if STRB_TOOLS
+
+        var result = GitTools.IsUpToDateWithRemote(Application.dataPath + "/..");
+        if (!result)
+        {
+            SceneView.lastActiveSceneView.ShowNotification(new GUIContent("Musisz zpullować repozytorium przed zablokowaniem sceny!"), 5f);
+            return;
+        }
+        
+        #endif
+        
         _api.LockScene(SceneManager.GetActiveScene().name, _info);
     }
 

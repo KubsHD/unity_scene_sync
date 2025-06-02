@@ -1,6 +1,5 @@
 import { Database } from "@/db/database";
 import { User } from "@/models/user";
-import { storbeed } from "@/protos";
 import { logger } from "@/server";
 import { registerMessageHandler, sendToAll } from "@/utils/websockets";
 

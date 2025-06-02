@@ -1,11 +1,9 @@
 import express, { Application, Request, Response, Router } from "express";
-import { User } from "@/models/user";
 import { logger } from "@/server";
 import { sceneInfoService } from "@/service/sceneInfoService";
 import { Database } from "@/db/database";
 import { sendToAll } from "@/utils/websockets";
 
-import { storbeed } from "@/protos";
 import { sceneLockService } from "@/service/sceneLockService";
 
 export const sceneInfoRouter: Router = (() => {
