@@ -17,25 +17,41 @@ export const sceneLockService = {
 
     const scene = project.scenes.find((s) => s.name == sceneName);
 
+    const user = project.users.find((u) => u.id == userId);
+    if (!user) {
+      logger.info(
+        `[${project.id}] (id: ${userId}) tried to lock scene ${sceneName} but failed since user not found`
+      );
+      return false;
+    }
+
     if (!scene) {
       project.scenes.push({
         name: sceneName,
         lockedBy: userId,
+        lockedByName: user.name,
         isLocked: true,
       });
     } else {
       if (scene.isLocked) {
         logger.info(
-          `[${project.id}] ${userId} tried to lock scene ${sceneName} but failed since it's locked by ${scene.lockedBy}`
+          `[${project.id}] ${
+            user!.name
+          } (id: ${userId}) tried to lock scene ${sceneName} but failed since it's locked by ${
+            scene.lockedByName
+          } (id: ${scene.lockedBy})`
         );
         return false;
       }
 
       scene.lockedBy = userId;
+      scene.lockedByName = user.name;
       scene.isLocked = true;
     }
 
-    logger.info(`[${project.id}] ${userId} locked scene ${sceneName}`);
+    logger.info(
+      `[${project.id}] ${user!.name} (id: ${userId}) locked scene ${sceneName}`
+    );
     return true;
   },
   unlockScene: (
@@ -57,7 +73,7 @@ export const sceneLockService = {
 
     if (scene.lockedBy !== userId) {
       logger.info(
-        `[${project.id}] ${userId} tried to unlock scene ${sceneName} but failed since it's locked by ${scene.lockedBy}`
+        `[${project.id}] ${userId} tried to unlock scene ${sceneName} but failed since it's locked by ${scene.lockedByName} (id: ${scene.lockedBy})`
       );
       return false;
     }

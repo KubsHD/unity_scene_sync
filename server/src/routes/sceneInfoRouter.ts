@@ -62,17 +62,22 @@ export const sceneInfoRouter: Router = (() => {
   });
 
   router.post("/lockScene", async (req: Request, res: Response) => {
-    logger.info(req.params.project + ": " + req.body.scene + " is locked");
-
     const result = sceneLockService.lockScene(
       req.params.project,
       req.body.scene,
       req.body.userId
     );
 
-    sendToAll(JSON.stringify(Database.getProjectById(req.params.project)));
-
-    res.sendStatus(200);
+    if (result) {
+      logger.info(req.params.project + ": " + req.body.scene + " is locked");
+      sendToAll(JSON.stringify(Database.getProjectById(req.params.project)));
+      res.sendStatus(200);
+    } else {
+      logger.warn(req.params.project + ": Failed to lock " + req.body.scene);
+      res
+        .status(409)
+        .json({ error: "Scene is already locked or project not found" });
+    }
   });
 
   router.post("/unlockScene", async (req: Request, res: Response) => {
@@ -82,9 +87,17 @@ export const sceneInfoRouter: Router = (() => {
       req.body.userId
     );
 
-    sendToAll(JSON.stringify(Database.getProjectById(req.params.project)));
-
-    res.sendStatus(200);
+    if (result) {
+      logger.info(req.params.project + ": " + req.body.scene + " is unlocked");
+      sendToAll(JSON.stringify(Database.getProjectById(req.params.project)));
+      res.sendStatus(200);
+    } else {
+      logger.warn(req.params.project + ": Failed to unlock " + req.body.scene);
+      res.status(400).json({
+        error:
+          "Cannot unlock scene - not locked by this user or scene not found",
+      });
+    }
   });
 
   return router;

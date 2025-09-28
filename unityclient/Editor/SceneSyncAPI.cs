@@ -18,12 +18,13 @@ public class SceneSyncAPI
         _project = project;
         _url = url + "/api/scene/" + _project;
     }
-    
+
     private static void AddAuthHeader(UnityWebRequest uwr)
     {
         uwr.SetRequestHeader("Authorization", "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes(":" + EditorPrefs.GetString(SceneSyncSettigns.PREFS_KEY_SECRET))));
     }
 
+    [Obsolete]
     public void LoginToServer(User info)
     {
         var uwr = UnityWebRequest.Post(_url + "/loginUser", JsonUtility.ToJson(info), "application/json");
@@ -31,7 +32,7 @@ public class SceneSyncAPI
 
         var response = uwr.SendWebRequest();
     }
-    
+
     public void LogoutFromServer(User info)
     {
         var uwr = UnityWebRequest.Post(_url + "/logoutUser", JsonUtility.ToJson(info), "application/json");
@@ -47,20 +48,20 @@ public class SceneSyncAPI
         AddAuthHeader(uwr);
 
         var response = await uwr.SendWebRequest();
-        
-        
+
+
         //Debug.Log(response.downloadHandler.text);
-        
+
         return JsonConvert.DeserializeObject<List<User>>(response.downloadHandler.text);
     }
 
     public async UniTask SendCurrentScene(User info)
     {
-        
+
         var uwr = UnityWebRequest.Post(_url + "/updateUser", JsonUtility.ToJson(info), "application/json");
         AddAuthHeader(uwr);
-        
-        
+
+
         var response = await uwr.SendWebRequest();
     }
 
@@ -68,10 +69,10 @@ public class SceneSyncAPI
     {
         var uwr = UnityWebRequest.PostWwwForm(_url, "");
         AddAuthHeader(uwr);
-        
+
         var response = uwr.SendWebRequest();
 
-        while (!response.isDone) {}
+        while (!response.isDone) { }
 
         return response.webRequest.responseCode != 401;
     }
@@ -79,16 +80,16 @@ public class SceneSyncAPI
     public void LockScene(string name, User info)
     {
         var data = JsonConvert.SerializeObject(new { scene = name, userId = info.id });
-        
+
         var uwr = UnityWebRequest.Post(_url + "/lockScene", data, "application/json");
         AddAuthHeader(uwr);
 
         var response = uwr.SendWebRequest();
     }
-    
+
     public void UnlockScene(string name, User info)
     {
-        var uwr = UnityWebRequest.Post(_url + "/unlockScene", JsonConvert.SerializeObject(new{scene = name, userId = info.id}), "application/json");
+        var uwr = UnityWebRequest.Post(_url + "/unlockScene", JsonConvert.SerializeObject(new { scene = name, userId = info.id }), "application/json");
         AddAuthHeader(uwr);
 
         var response = uwr.SendWebRequest();

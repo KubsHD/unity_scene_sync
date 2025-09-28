@@ -21,6 +21,7 @@ namespace UnitySceneSync.Models
     {
         public String name;
         public string lockedBy;
+        public string lockedByName;
         public bool isLocked;
     }
 

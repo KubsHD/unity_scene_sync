@@ -16,12 +16,12 @@ public class SceneUsersOverlay : Overlay
     private Button _connectButton;
     private Button _lockUnlockButton;
     private ListView _userListView;
-    
+
     private bool _isCurrentSceneLocked;
     private bool _isCurrentSceneLockedByMe;
-    
+
     private string _currentScene;
-    
+
     public static SceneUsersOverlay Instance;
 
     public override void OnCreated()
@@ -32,7 +32,7 @@ public class SceneUsersOverlay : Overlay
     }
 
     private List<User> _filteredUsers = new List<User>();
-    
+
     public async void UpdateProjectInfo(SceneInfo scene, User[] users, bool isSceneLocked, bool isSceneLockedByMe)
     {
         //Debug.Log("Updating clients from websocket");
@@ -42,36 +42,35 @@ public class SceneUsersOverlay : Overlay
         _filteredUsers = users.ToList();
         _isCurrentSceneLockedByMe = isSceneLockedByMe;
         _isCurrentSceneLocked = isSceneLocked;
-        
+
         if (_isCurrentSceneLocked && !_isCurrentSceneLockedByMe)
         {
             // scene locked by someone else
-            
-            if (users.Any(x=> x.id == scene.lockedBy) == false)
+
+            var lockingUser = users.FirstOrDefault(x => x.id == scene.lockedBy);
+            if (string.IsNullOrEmpty(lockingUser.id))
             {
-                var dbUser = users.First(x => x.id == scene.lockedBy);
-                
                 User u = new User();
-                u.name = dbUser.name;
-                //u.device = dbUser.device;
+                u.name = scene.lockedByName;
+                u.id = scene.lockedBy;
                 u.time = -1;
                 _filteredUsers.Add(u);
             }
-            
+
             _lockUnlockButton.SetEnabled(false);
         }
         else
         {
             _lockUnlockButton.SetEnabled(true);
-            
+
             if (_isCurrentSceneLockedByMe)
                 _lockUnlockButton.text = "Unlock";
             else
                 _lockUnlockButton.text = "Lock";
         }
-        
+
         _userListView.itemsSource = _filteredUsers;
-        
+
         var inst = SceneSync.instance;
         _userListView.bindItem = (element, i) =>
         {
@@ -80,7 +79,7 @@ public class SceneUsersOverlay : Overlay
             var lockIcon = element.Q<Image>();
 
             nameLabel.text = _filteredUsers[i].name;
-            
+
             if (_filteredUsers[i].time == -1)
                 nameLabel.style.color = new StyleColor(new Color(0.5f, 0.5f, 0.5f));
             else
@@ -107,21 +106,21 @@ public class SceneUsersOverlay : Overlay
             _connectButton.RemoveFromHierarchy();
         }
     }
-    
+
     public override VisualElement CreatePanelContent()
     {
-        
+
         Instance = this;
-        
-        
+
+
         _root = new VisualElement();
 
         _root.style.height = new StyleLength(StyleKeyword.Auto);
         _root.style.justifyContent = Justify.SpaceBetween;
-        
+
         _connectButton = new Button();
         _connectButton.text = "Connect";
-        
+
         _lockUnlockButton = new Button();
         _lockUnlockButton.text = "Lock";
         _lockUnlockButton.SetEnabled(true);
@@ -138,20 +137,20 @@ public class SceneUsersOverlay : Overlay
                 SceneSync.instance.TryLockScene();
             }
         };
-        
+
         _userListLabel = new Label("");
         _connectButton.clicked += () =>
         {
             SceneSync.instance.TryConnect();
         };
-        
-        
+
+
         _userListView = new ListView();
-        
+
         _userListView.selectionType = SelectionType.None;
         _userListView.style.flexGrow = 0.0f;
         _userListView.style.maxHeight = 100;
-        
+
         _userListView.makeItem = () =>
         {
             VisualElement container = new VisualElement();
@@ -164,9 +163,9 @@ public class SceneUsersOverlay : Overlay
             nameLabel.style.flexGrow = 1;
             container.Add(nameLabel);
 
-            
+
             var tex = EditorGUIUtility.IconContent("P4_LockedRemote").image;
-            
+
             // Create the lock icon
             VisualElement lockIcon = new Image()
             {
@@ -178,8 +177,8 @@ public class SceneUsersOverlay : Overlay
 
             return container;
         };
-        
- 
+
+
         _root.Add(_userListLabel);
         _root.Add(_userListView);
         _root.Add(_lockUnlockButton);

@@ -14,14 +14,12 @@ using UnityEngine.UIElements;
 using Newtonsoft.Json;
 using Sirenix.OdinInspector;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Google.Protobuf;
 using NativeWebSocket;
 using UnityEngine.SceneManagement;
 using FilePathAttribute = UnityEditor.FilePathAttribute;
 using UnitySceneSync.Models;
-using Newtonsoft.Json;
 
 [UnityEditor.FilePath("STRB/SceneSync.state", FilePathAttribute.Location.PreferencesFolder)]
 [InitializeOnLoad]
@@ -29,7 +27,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
 {
     public static string URL = "http://localhost:3001";
 
-    private static User _info;
+    private static User _info = new User();
     private static Task _wsTask;
     private static WebSocket _ws;
 
@@ -39,7 +37,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
 
     private bool _isCurrentSceneLocked;
     private bool _isCurrentSceneLockedByMe;
-    
+
     public static Project ProjectInfo;
 
     private void OnEnable()
@@ -57,45 +55,45 @@ public class SceneSync : ScriptableSingleton<SceneSync>
     {
         return ProjectInfo.scenes.Where(x => x.isLocked && x.lockedBy != _info.id).Select(x => x.name).ToList();
     }
-    
+
     public void TryConnect()
     {
         URL = EditorPrefs.GetString(SceneSyncSettigns.PREFS_KEY_URL);
 
         _api = new SceneSyncAPI(URL, PlayerSettings.productName);
 
-        
+
         if (!_api.Ping())
         {
             Debug.LogError("Couldn't connect to server!");
             return;
         }
 
-        
+
         _info.name = Environment.UserName;
         _info.id = SystemInfo.deviceUniqueIdentifier;
         //_info.device = SystemInfo.deviceName;
         _info.scene = SceneManager.GetActiveScene().name;
-        
+
         // setup unity callbacks
         EditorSceneManager.sceneOpened += async (arg0, mode) =>
         {
             _info.scene = arg0.name;
             await _api.SendCurrentScene(_info);
         };
-        
+
         EditorApplication.quitting += () =>
         {
             _api.LogoutFromServer(_info);
         };
-        
+
         WebSocketThread();
-        
+
         Debug.Log("Scene sync initalized! ");
 
         initialDataSend();
     }
-    
+
     private async void initialDataSend()
     {
         await UniTask.WaitUntil(() => _ws.State == WebSocketState.Open);
@@ -113,11 +111,11 @@ public class SceneSync : ScriptableSingleton<SceneSync>
         var bytes = System.Text.Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(msg).ToString());
 
         Debug.Log("heartbeat: " + _ws.State);
-        
+
         while (_connectionOpen)
         {
             await UniTask.WaitForSeconds(0.3f);
-            if (_connectionOpen)
+            if (!_connectionOpen)
                 return;
             await _ws.Send(bytes);
         }
@@ -141,49 +139,49 @@ public class SceneSync : ScriptableSingleton<SceneSync>
             _ = WebsocketHeartbeat();
         };
 
-        
+
         _ws.OnError += (e) =>
         {
             Debug.Log("Error! " + e);
         };
-        
+
         _ws.OnClose += (e) =>
         {
             Debug.Log("Connection closed!");
-            
+
             _connectionOpen = false;
-            
+
             SceneUsersOverlay.Instance.ClearList();
             SceneUsersOverlay.Instance.SetConnectionButtonVisibility(true);
         };
 
-        
+
         _ws.OnMessage += (bytes) =>
         {
             ProjectInfo = JsonConvert.DeserializeObject<Project>(Encoding.ASCII.GetString(bytes, 0, bytes.Length));
-            
+
             _isCurrentSceneLocked = ProjectInfo.scenes.Exists(x => x.name == _info.scene && x.isLocked);
             _isCurrentSceneLockedByMe = CheckIfUserLockedCurrentScene(GetUserInfo());
-            
+
             // get all users that either are on scene or lock one or more scenes
             var users = ProjectInfo.users;
             users = users.Where(x => x.scene == _info.scene).ToList();
 
             var scene = ProjectInfo.scenes.FirstOrDefault(x => x.name == _info.scene);
-            
+
             SceneUsersOverlay.Instance.UpdateProjectInfo(scene,
                 users.ToArray(), _isCurrentSceneLocked, _isCurrentSceneLockedByMe);
         };
-        
-        
+
+
         EditorApplication.update += () => SceneSync.updateWebSocket();
-        
+
         await _ws.Connect();
 
     }
 
-    
-    
+
+
     static void updateWebSocket()
     {
         _ws.DispatchMessageQueue();
@@ -192,19 +190,19 @@ public class SceneSync : ScriptableSingleton<SceneSync>
     public bool CheckIfUserLockedCurrentScene(User user)
     {
         var isScene = ProjectInfo.scenes.Exists(x => x.name == SceneManager.GetActiveScene().name);
-        
+
         if (!isScene)
             return false;
-                
+
         var scene = ProjectInfo.scenes.First(x => x.name == SceneManager.GetActiveScene().name);
-                
-            
+
+
         return scene.lockedBy == user.id && scene.isLocked;
     }
 
     public void TryLockScene()
     {
-        #if STRB_TOOLS
+#if STRB_TOOLS
 
         var result = GitTools.IsUpToDateWithRemote(Application.dataPath + "/..");
         if (!result)
@@ -212,9 +210,9 @@ public class SceneSync : ScriptableSingleton<SceneSync>
             SceneView.lastActiveSceneView.ShowNotification(new GUIContent("Musisz zpullować repozytorium przed zablokowaniem sceny!"), 5f);
             return;
         }
-        
-        #endif
-        
+
+#endif
+
         _api.LockScene(SceneManager.GetActiveScene().name, _info);
     }
 
@@ -227,7 +225,7 @@ public class SceneSync : ScriptableSingleton<SceneSync>
     {
         return _info.name;
     }
-    
+
     public User GetUserInfo()
     {
         return _info;

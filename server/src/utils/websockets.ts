@@ -56,7 +56,7 @@ export const setupWebSockets = (httpServer: Server) => {
 
     // Handle incoming messages from the client
     ws.on("message", (message: string) => {
-      logger.info(`Received message: ${message}`);
+      //logger.info(`Received message: ${message}`);
 
       let parsedMessage: any;
       try {
@@ -68,9 +68,17 @@ export const setupWebSockets = (httpServer: Server) => {
 
       const messageType = parsedMessage.type;
       const messagePayload = parsedMessage.payload;
-      messageHandlers
-        .find((handler) => handler.key === messageType)
-        ?.handler(messagePayload);
+
+      const handler = messageHandlers.find((h) => h.key === messageType);
+      if (handler) {
+        try {
+          handler.handler(messagePayload);
+        } catch (error) {
+          logger.error(`Error handling message type ${messageType}:`, error);
+        }
+      } else {
+        //logger.warn(`Unknown message type: ${messageType}`);
+      }
     });
 
     ws.on("close", () => {

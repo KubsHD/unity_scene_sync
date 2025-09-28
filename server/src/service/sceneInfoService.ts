@@ -7,8 +7,9 @@ const getProject = (project: string) => {
   const foundProject = Database.projects.find((p) => p.id == project);
   if (foundProject) return foundProject;
   else {
-    Database.projects.push({ id: project, users: [], scenes: [] });
-    return Database.projects.find((p) => p.id == project);
+    const newProject = { id: project, users: [], scenes: [] };
+    Database.projects.push(newProject);
+    return newProject;
   }
 };
 
@@ -34,9 +35,11 @@ export const sceneInfoService = {
       return null;
     }
 
-    return structuredClone(
+    const users = structuredClone(
       project.users.filter((u: User) => u.scene == sceneName)
-    ).forEach((u: User) => (u.id = ""));
+    );
+    users.forEach((u: User) => (u.id = ""));
+    return users;
   },
   updateUserOnScene: async (projectId: string, userData: any) => {
     const project = getProject(projectId);
@@ -66,9 +69,10 @@ export const sceneInfoService = {
       return null;
     }
 
-    let u: User | undefined = project.users.find((u: User) => u.id == userId);
+    let u: User | undefined = project.users.find((u: User) => u.id === userId);
 
     if (u) {
+      console.log("Logging out user:", u);
       var index = project.users.indexOf(u);
       if (index !== -1) {
         project.users.splice(index, 1);
