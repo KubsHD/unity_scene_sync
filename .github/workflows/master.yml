@@ -11,16 +11,17 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       -
-        name: Login to Docker Hub
+        name: Login to GHCR
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Build and push
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: kubs/unity-scene-sync:latest
+          tags: ghcr.io/kubshd/unity-scene-sync:latest
           context: "{{defaultContext}}:server"
           platforms: linux/amd64,linux/arm64
